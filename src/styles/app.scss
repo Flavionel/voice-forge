@@ -1,0 +1,46 @@
+// App-wide styles
+
+body {
+  background-color: #1d1d1d;
+}
+
+a {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1d1d1d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+
+  &:hover {
+    background: #777;
+  }
+}
+
+// Transitions for smooth UI
+.q-tab-panels {
+  transition: height 0.3s ease;
+}
+
+// Card hover effects
+.q-card {
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+}

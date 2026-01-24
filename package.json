@@ -1,0 +1,72 @@
+{
+  "name": "voice-forge",
+  "version": "1.0.0",
+  "description": "Advanced TTS app for streaming with ElevenLabs integration",
+  "main": "./out/main/index.js",
+  "author": "Flavionel",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Flavionel/voice-forge.git"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "electron-builder"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.16.12",
+    "electron-log": "^5.2.4",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
+    "quasar": "^2.16.0",
+    "uuid": "^9.0.1",
+    "vue": "^3.4.31",
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@quasar/vite-plugin": "^1.7.0",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "electron": "^31.2.1",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^2.3.0",
+    "sass": "^1.77.8",
+    "vite": "^5.3.3"
+  },
+  "build": {
+    "appId": "com.flavionel.voiceforge",
+    "productName": "VoiceForge",
+    "icon": "build/icon",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "Flavionel",
+      "repo": "voice-forge"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build/icon.png"
+    }
+  }
+}
