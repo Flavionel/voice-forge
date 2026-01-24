@@ -42,9 +42,7 @@ And since GPT is already looking at every message, we put it to double duty with
 
 ### Download
 
-Download the latest installer from the [Releases](../../releases) page.
-
-Download .sb files from [streamerbot-extension](streamerbot-extension) folder.
+Download the latest installer and .sb files from the [Releases](../../releases) page.
 
 ### Build from Source
 
