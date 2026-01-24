@@ -1,23 +1,26 @@
-# VoiceForge
+<div align="center">
 
-<!-- Short tagline / one-liner description -->
-_AI-powered Text-to-Speech for Twitch streamers, powered by ElevenLabs._
+<img width="256" height="256" alt="logo"
+src="https://github.com/user-attachments/assets/b1536b22-9d6b-428c-a780-4ec5989a1351" />
 
-<!-- Optional: badges -->
-<!-- ![License](https://img.shields.io/github/license/YOUR_USERNAME/voice-forge) -->
-<!-- ![Release](https://img.shields.io/github/v/release/YOUR_USERNAME/voice-forge) -->
+<h1>VoiceForge</h1>
 
-<!-- Optional: screenshot or demo GIF -->
-<!-- ![VoiceForge Screenshot](docs/images/screenshot.png) -->
+</div>
 
 ## What is VoiceForge?
 
-<!-- 2-3 paragraphs explaining what this app does, who it's for, and why it exists -->
-<!-- Example: VoiceForge is a desktop application that lets Twitch viewers redeem channel points to have their messages read aloud using AI-generated voices... -->
+_AI-powered Text-to-Speech for Twitch streamers, powered by ElevenLabs._
+
+VoiceForge is my desktop app that unlocks the full magic of ElevenLabs TTS on your stream. You get total control over voice models, all the V3 settings, and that incredible emotional depth the engine is capable of!
+
+I made it because the existing TTS options just... weren’t cutting it. ElevenLabs V3 voices can be mind-blowingly expressive — laughing, whispering, shouting, even singing — but only if you feed them the right prompts. Most tools leave that magic on the table.
+
+VoiceForge fixes that with a clever twist: it uses ChatGPT as your personal Voice Director. For every message, it reads the text, figures out the vibe, and automatically adds the perfect V3 tags for emotion, pacing, and tone. The result? Your TTS stops sounding like a robot and starts feeling like a real character reacting to chat.
+
+And since GPT is already looking at every message, we put it to double duty with smart AI content moderation — quietly catching anything inappropriate, sneaky evasions, or off-limits topics before they ever hit your speakers.
 
 ## Features
 
-<!-- List your key features. Some suggestions based on the codebase: -->
 - Multiple ElevenLabs voice aliases with per-voice settings
 - AI-powered content moderation (configurable strictness levels)
 - Emotion-enhanced TTS with ElevenLabs V3 voice tags
@@ -29,7 +32,6 @@ _AI-powered Text-to-Speech for Twitch streamers, powered by ElevenLabs._
 
 ## Requirements
 
-<!-- What does the user need before installing? -->
 - Windows 10/11
 - [ElevenLabs](https://elevenlabs.io/) API key (for TTS generation)
 - [OpenAI](https://platform.openai.com/) API key (for AI moderation/emotion tags)
@@ -40,7 +42,6 @@ _AI-powered Text-to-Speech for Twitch streamers, powered by ElevenLabs._
 
 ### Download
 
-<!-- Point to the Releases page -->
 Download the latest installer from the [Releases](../../releases) page.
 
 ### Build from Source
