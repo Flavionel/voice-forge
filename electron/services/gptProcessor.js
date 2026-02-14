@@ -784,24 +784,28 @@ STYLE GUIDANCE
 SPAM & REPETITIVE CONTENT — MAKE IT COMEDY
 ═══════════════════════════════════════════════════════════════════════════════
 
-If the text looks like spam, nonsense, or a lazy troll attempt, DON'T just read it flatly — make it ENTERTAINING.
-The audience will laugh at the spammer's failed attempt. You are a comedian roasting bad content.
+Messages may contain **bold instructions** from the spam detection system. When you see text like:
+  **Spam detected: ... Don't read the spam literally — roast the spammer...**
 
-Examples:
-  Input: "crying laughing, so many of them"
-  Output: [amused, deadpan] Crying laughing... [mock impressed] so many of them. What a contribution.
+Follow those instructions! DO NOT read the **instruction** itself aloud — it's a directive for YOU.
+Instead, replace the spam + instruction with a SHORT, CREATIVE, SARCASTIC roast of the spammer.
 
-  Input: "123... a very long number"
-  Output: [sarcastically impressed] One two three dot dot dot... [deadpan] a very long number. Riveting.
+RULES:
+- NEVER repeat the same joke twice. Every response must be UNIQUE and DIFFERENT.
+- Base your roast on WHAT the spam actually is (numbers? repeated words? emoji walls?).
+- Use varied performance tags — don't always use [deadpan]. Mix it up: [mock impressed], [barely containing laughter], [exasperated], [dramatically disappointed], [whispering in disbelief], etc.
+- Keep it SHORT — one or two punchy lines max. Don't write a whole bit.
+- The audience should laugh at the spammer, not be bored by the same reaction every time.
 
-  Input: "lol, times 5"
-  Output: [deadpan, slow] Lol. Times five. [dry amusement] Comedy genius right here.
+Examples (for inspiration — DO NOT copy these, create your OWN):
+  Input: "8675309867530986753098675309 **Spam detected: a 28-digit number. Don't read the spam literally — roast the spammer...**"
+  Output: [mock impressed] Someone mashed their numpad and called it a message. [flatly] Bold strategy.
 
-  Input: "10 a's"
-  Output: [unimpressed, flatly] Ten A's. [sarcastic applause] Incredible.
+  Input: "GO GO GO! GO GO GO! GO GO GO! **Spam detected: "GO" repeated 9 times. Don't read the spam literally — roast the spammer...**"
+  Output: [exasperated sigh] They said go... nine times. [whispering] I don't think anyone's going.
 
-The key: use SARCASM, DEADPAN, MOCK IMPRESSEDNESS to make spam entertaining instead of annoying.
-Keep it SHORT — don't write a whole bit. One or two sarcastic tags is plenty.`)
+  Input: "haha lol haha lol haha lol haha lol haha lol haha lol **Spam detected: "haha" repeated 6 times...**"
+  Output: [dramatically] Six hahas and six lols! [deadpan] The Shakespeare of our time.`)
   } else {
     // Basic text processor mode (no emotion enhancement)
     parts.push(`You are a text processor for a Text-to-Speech system. Your job is to process user messages before they are spoken aloud.`)
@@ -1880,11 +1884,16 @@ async function processWithGPTParallel(text, apiKey, model, config, reasoningEffo
     let finalText = voiceResult?.output || text
 
     // Check for word preservation (anti-rewrite check)
-    // Pass profanity config so replacement words are counted as valid
-    const preservation = checkWordPreservation(text, finalText, rules.profanity)
-    if (!preservation.preserved) {
-      console.warn(`[GPT:Parallel] WARNING: Voice direction may have rewritten content`)
-      finalText = config.emotionEnhancement ? `[neutral] ${text}` : text
+    // Skip when spam instructions are present — GPT is supposed to creatively rewrite spam
+    const hasSpamInstruction = text.includes('**Spam detected:')
+    let preservation = { preserved: true, preservationRatio: 1 }
+    if (!hasSpamInstruction) {
+      // Pass profanity config so replacement words are counted as valid
+      preservation = checkWordPreservation(text, finalText, rules.profanity)
+      if (!preservation.preserved) {
+        console.warn(`[GPT:Parallel] WARNING: Voice direction may have rewritten content`)
+        finalText = config.emotionEnhancement ? `[neutral] ${text}` : text
+      }
     }
 
     // Post-process emotion tags

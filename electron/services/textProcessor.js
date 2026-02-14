@@ -196,77 +196,34 @@ function replaceEmojis(text) {
 }
 
 /**
- * Collapse repetitive/spam content into concise summaries
- * Prevents TTS from reading 50 identical characters or absurdly long numbers
- * Designed to make spam attempts entertaining rather than disruptive
+ * Detect spam patterns in text without modifying it
+ * Returns details about what was detected so the AI can handle it creatively
  * @param {string} text - Input text
- * @returns {string} - Text with spam collapsed
+ * @returns {{ detected: boolean, details: string[] }}
  */
-function collapseRepetition(text) {
-  if (!text) return text
+function detectSpamPatterns(text) {
+  if (!text) return { detected: false, details: [] }
 
-  let result = text
+  const details = []
 
-  // 1. Collapse long number strings (10+ digits) with randomized sarcastic descriptions
-  const numberJokes = {
-    huge: [
-      'someone just smashed their keyboard on the number row',
-      'congratulations, you invented a new phone number for the entire planet',
-      'that is not a number, that is a cry for help',
-      'someone really wanted to test my patience with digits',
-      'I think that is their credit card number... just kidding... or am I',
-      'wow, a number so long it needs its own zip code',
-      'ah yes, the nuclear launch codes',
-      'pretty sure that is pi but they gave up after a while',
-    ],
-    long: [
-      'that is a suspiciously long number',
-      'someone is showing off their math homework',
-      'okay that is a big number, very impressive',
-      'I am not reading all those digits, nice try though',
-      'someone discovered the number keys today',
-    ]
+  // 1. Detect long number strings (10+ digits)
+  const numberMatches = text.match(/\d{10,}/g)
+  if (numberMatches) {
+    for (const match of numberMatches) {
+      details.push(`a ${match.length}-digit number`)
+    }
   }
 
-  result = result.replace(/\d{10,}/g, (match) => {
-    if (match.length >= 15) {
-      const jokes = numberJokes.huge
-      return jokes[Math.floor(Math.random() * jokes.length)]
+  // 2. Detect repeated words (6+ repetitions, punctuation allowed between)
+  const wordMatches = text.match(/\b(\w+)(?:[\s!?,.:;]+\1){5,}\b/gi)
+  if (wordMatches) {
+    for (const match of wordMatches) {
+      const words = match.split(/[\s!?,.:;]+/).filter(Boolean)
+      details.push(`"${words[0]}" repeated ${words.length} times`)
     }
-    const jokes = numberJokes.long
-    return jokes[Math.floor(Math.random() * jokes.length)]
-  })
-
-  // 2. Collapse repeated words (6+ repetitions, punctuation allowed between)
-  //    "GO GO GO GO GO!" → allowed (5 or fewer)
-  //    "GO GO GO! GO GO GO! GO GO GO!" → collapsed (9 total)
-  const wordSpamJokes = {
-    extreme: [
-      (w) => `${w}... okay we get it, ${w}`,
-      (w) => `${w}, they really want us to know: ${w}`,
-      (w) => `${w}... someone got stuck on the ${w} key`,
-    ],
-    moderate: [
-      (w) => `${w} ${w} ${w}... yes, we heard you the first time`,
-      (w) => `${w}, again and again and again`,
-      (w) => `${w}, on repeat, like a broken record`,
-    ]
   }
 
-  result = result.replace(/\b(\w+)(?:[\s!?,.:;]+\1){5,}\b/gi, (match, word) => {
-    const count = match.split(/[\s!?,.:;]+/).filter(Boolean).length
-    if (count >= 8) {
-      const jokes = wordSpamJokes.extreme
-      return jokes[Math.floor(Math.random() * jokes.length)](word)
-    }
-    const jokes = wordSpamJokes.moderate
-    return jokes[Math.floor(Math.random() * jokes.length)](word)
-  })
-
-  // Normalize whitespace
-  result = result.replace(/\s+/g, ' ').trim()
-
-  return result
+  return { detected: details.length > 0, details }
 }
 
 /**
@@ -322,14 +279,15 @@ function sanitizeInput(text, config) {
   // Spam/repetition handling (configurable: 'allow', 'troll', 'block')
   const spamMode = config?.spamMode || 'troll'
   if (spamMode === 'troll') {
-    const before = result
-    result = collapseRepetition(result)
-    if (before !== result) {
+    const spam = detectSpamPatterns(result)
+    if (spam.detected) {
+      const detectedItems = spam.details.join(', ')
+      result += ` **Spam detected: ${detectedItems}. Don't read the spam literally — roast the spammer with creative, unique sarcasm. Be punchy and entertaining, and keep it short.**`
       sanitizationApplied.push('spam')
     }
   } else if (spamMode === 'block') {
-    const collapsed = collapseRepetition(result)
-    if (collapsed !== result) {
+    const spam = detectSpamPatterns(result)
+    if (spam.detected) {
       return { result: '', sanitizationApplied: ['spam-blocked'], spamBlocked: true }
     }
   }

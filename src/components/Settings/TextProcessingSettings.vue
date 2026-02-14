@@ -100,7 +100,8 @@
                 Spam passes through unchanged. TTS will read it as-is.
               </span>
               <span v-else-if="sanitization.spamMode === 'troll'">
-                Spam gets replaced with sarcastic commentary. Entertaining for viewers!
+                Spam is detected and the AI is instructed to roast the spammer with
+                unique, creative sarcasm. Requires AI Processing to be enabled.
               </span>
               <span v-else>
                 Messages containing spam are blocked entirely and refunded.
@@ -311,7 +312,7 @@
             :model-value="testResult.processedText"
             outlined
             readonly
-            label="Final result (sent to TTS)"
+            :label="testResult.sanitizationApplied?.includes('spam') ? 'After text processing (AI will process further)' : 'Final result (sent to TTS)'"
             type="textarea"
             autogrow
             :class="testResult.wasModified ? 'result-modified' : ''"
