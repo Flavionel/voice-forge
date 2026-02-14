@@ -65,10 +65,47 @@
             label="Strip user bracket tags"
             @update:model-value="val => updateSanitization('stripUserBracketTags', val)"
           />
-          <div class="text-caption text-grey-6 q-ml-xl">
+          <div class="text-caption text-grey-6 q-ml-xl q-mb-md">
             Removes user-added [tags] to prevent TTS injection.
             Valid V3 emotion tags (like [laugh], [sigh]) are preserved.
             <strong>Individual voices can override this.</strong>
+          </div>
+
+          <q-separator class="q-my-sm" />
+
+          <div class="q-mt-md">
+            <div class="text-body2 q-mb-xs">Spam &amp; Repetition Handling</div>
+            <div class="text-caption text-grey-6 q-mb-sm">
+              Controls how repetitive content is handled — long number strings, repeated words,
+              and emoji spam.
+            </div>
+            <q-btn-toggle
+              :model-value="sanitization.spamMode"
+              @update:model-value="val => updateSanitization('spamMode', val)"
+              spread
+              no-caps
+              rounded
+              toggle-color="primary"
+              color="grey-9"
+              text-color="grey-5"
+              :options="[
+                { value: 'allow', label: 'Allow', icon: 'check_circle' },
+                { value: 'troll', label: 'Troll', icon: 'sentiment_very_satisfied' },
+                { value: 'block', label: 'Block', icon: 'block' }
+              ]"
+              class="q-mb-xs"
+            />
+            <div class="text-caption text-grey-6">
+              <span v-if="sanitization.spamMode === 'allow'">
+                Spam passes through unchanged. TTS will read it as-is.
+              </span>
+              <span v-else-if="sanitization.spamMode === 'troll'">
+                Spam gets replaced with sarcastic commentary. Entertaining for viewers!
+              </span>
+              <span v-else>
+                Messages containing spam are blocked entirely and refunded.
+              </span>
+            </div>
           </div>
         </div>
       </q-card-section>
@@ -397,7 +434,8 @@ const sanitization = computed(() => {
     stripCodeBlocks: s.stripCodeBlocks ?? true,
     stripZalgoText: s.stripZalgoText ?? true,
     replaceEmojis: s.replaceEmojis ?? true,
-    stripUserBracketTags: s.stripUserBracketTags ?? true
+    stripUserBracketTags: s.stripUserBracketTags ?? true,
+    spamMode: s.spamMode ?? 'troll'
   }
 })
 

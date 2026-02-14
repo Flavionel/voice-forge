@@ -33,6 +33,9 @@ export default defineConfig({
         }
       }
     },
+    optimizeDeps: {
+      include: ['marked']
+    },
     plugins: [
       vue({
         template: { transformAssetUrls }

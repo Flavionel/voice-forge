@@ -207,23 +207,60 @@ function collapseRepetition(text) {
 
   let result = text
 
-  // 1. Collapse long number strings (10+ digits)
-  //    "12323423424234634634634060980394860394860348603968" → "123... a ridiculously long number"
+  // 1. Collapse long number strings (10+ digits) with randomized sarcastic descriptions
+  const numberJokes = {
+    huge: [
+      'someone just smashed their keyboard on the number row',
+      'congratulations, you invented a new phone number for the entire planet',
+      'that is not a number, that is a cry for help',
+      'someone really wanted to test my patience with digits',
+      'I think that is their credit card number... just kidding... or am I',
+      'wow, a number so long it needs its own zip code',
+      'ah yes, the nuclear launch codes',
+      'pretty sure that is pi but they gave up after a while',
+    ],
+    long: [
+      'that is a suspiciously long number',
+      'someone is showing off their math homework',
+      'okay that is a big number, very impressive',
+      'I am not reading all those digits, nice try though',
+      'someone discovered the number keys today',
+    ]
+  }
+
   result = result.replace(/\d{10,}/g, (match) => {
-    const preview = match.substring(0, 3)
-    if (match.length >= 30) return `${preview}... an absurdly long number`
-    if (match.length >= 15) return `${preview}... a very long number`
-    return `${preview}... a long number`
+    if (match.length >= 15) {
+      const jokes = numberJokes.huge
+      return jokes[Math.floor(Math.random() * jokes.length)]
+    }
+    const jokes = numberJokes.long
+    return jokes[Math.floor(Math.random() * jokes.length)]
   })
 
   // 2. Collapse repeated words (6+ repetitions, punctuation allowed between)
   //    "GO GO GO GO GO!" → allowed (5 or fewer)
   //    "GO GO GO! GO GO GO! GO GO GO!" → collapsed (9 total)
+  const wordSpamJokes = {
+    extreme: [
+      (w) => `${w}... okay we get it, ${w}`,
+      (w) => `${w}, they really want us to know: ${w}`,
+      (w) => `${w}... someone got stuck on the ${w} key`,
+    ],
+    moderate: [
+      (w) => `${w} ${w} ${w}... yes, we heard you the first time`,
+      (w) => `${w}, again and again and again`,
+      (w) => `${w}, on repeat, like a broken record`,
+    ]
+  }
+
   result = result.replace(/\b(\w+)(?:[\s!?,.:;]+\1){5,}\b/gi, (match, word) => {
     const count = match.split(/[\s!?,.:;]+/).filter(Boolean).length
-    if (count >= 10) return `${word}, a whole wall of them`
-    if (count >= 7) return `${word}, so many of them`
-    return `${word}, times ${count}`
+    if (count >= 8) {
+      const jokes = wordSpamJokes.extreme
+      return jokes[Math.floor(Math.random() * jokes.length)](word)
+    }
+    const jokes = wordSpamJokes.moderate
+    return jokes[Math.floor(Math.random() * jokes.length)](word)
   })
 
   // Normalize whitespace
@@ -282,14 +319,21 @@ function sanitizeInput(text, config) {
     }
   }
 
-  // Collapse repetitive/spam content (always on — nobody wants TTS reading 50 a's)
-  {
+  // Spam/repetition handling (configurable: 'allow', 'troll', 'block')
+  const spamMode = config?.spamMode || 'troll'
+  if (spamMode === 'troll') {
     const before = result
     result = collapseRepetition(result)
     if (before !== result) {
       sanitizationApplied.push('spam')
     }
+  } else if (spamMode === 'block') {
+    const collapsed = collapseRepetition(result)
+    if (collapsed !== result) {
+      return { result: '', sanitizationApplied: ['spam-blocked'], spamBlocked: true }
+    }
   }
+  // 'allow' mode: skip entirely
 
   // Strip user bracket tags (unless explicitly disabled)
   if (config?.stripUserBracketTags !== false) {
@@ -353,7 +397,8 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
     stripCodeBlocks: true,
     stripZalgoText: true,
     replaceEmojis: true,
-    stripUserBracketTags: true
+    stripUserBracketTags: true,
+    spamMode: 'troll'
   }
 
   // If voice ignores sanitization entirely, disable all sanitization
@@ -363,7 +408,8 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
       stripCodeBlocks: false,
       stripZalgoText: false,
       replaceEmojis: false,
-      stripUserBracketTags: false
+      stripUserBracketTags: false,
+      spamMode: 'allow'
     }
   }
 
@@ -373,7 +419,8 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
     stripCodeBlocks: globalConfig?.stripCodeBlocks ?? defaults.stripCodeBlocks,
     stripZalgoText: globalConfig?.stripZalgoText ?? defaults.stripZalgoText,
     replaceEmojis: globalConfig?.replaceEmojis ?? defaults.replaceEmojis,
-    stripUserBracketTags: globalConfig?.stripUserBracketTags ?? defaults.stripUserBracketTags
+    stripUserBracketTags: globalConfig?.stripUserBracketTags ?? defaults.stripUserBracketTags,
+    spamMode: globalConfig?.spamMode ?? defaults.spamMode
   }
 
   // Apply voice-specific overrides

@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // App info
   getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+  getChangelog: () => ipcRenderer.invoke('app:getChangelog'),
 
   // Shell
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),

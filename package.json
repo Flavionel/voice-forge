@@ -1,6 +1,6 @@
 {
   "name": "voice-forge",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Advanced TTS app for streaming with ElevenLabs integration",
   "main": "./out/main/index.js",
   "author": "Flavionel",
@@ -20,6 +20,7 @@
     "electron-log": "^5.2.4",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.3.9",
+    "marked": "^15.0.0",
     "quasar": "^2.16.0",
     "uuid": "^9.0.1",
     "vue": "^3.4.31",

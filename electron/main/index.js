@@ -83,7 +83,8 @@ const store = new Store({
       stripHtmlTags: true,
       stripCodeBlocks: true,
       stripZalgoText: true,  // Remove Zalgo/combining Unicode marks
-      stripUserBracketTags: true  // Remove user's [tags] - can be disabled per-voice
+      stripUserBracketTags: true,  // Remove user's [tags] - can be disabled per-voice
+      spamMode: 'troll'  // 'allow' = pass through, 'troll' = sarcastic replacement, 'block' = reject message
     },
     // OpenAI/GPT settings
     openAIDefaultModel: 'gpt-5-nano',  // Default model for GPT processing
@@ -691,7 +692,17 @@ ipcMain.handle('gpt:testProcess', async (event, { text, voiceAlias }) => {
 
   // Step 1: Sanitize input
   const effectiveSanitization = getEffectiveSanitization(voiceConfig, globalSanitization)
-  const { result: sanitizedText, sanitizationApplied } = sanitizeInput(text, effectiveSanitization)
+  const sanitizeResult = sanitizeInput(text, effectiveSanitization)
+  const { result: sanitizedText, sanitizationApplied } = sanitizeResult
+
+  // If spam was blocked, return immediately
+  if (sanitizeResult.spamBlocked) {
+    return {
+      sanitizedText: '',
+      sanitizationApplied,
+      result: { success: true, text: null, blocked: true, blockReason: 'Spam detected (repetitive content)', tagsAdded: [] }
+    }
+  }
 
   // Step 2: Determine effective GPT config
   const effectiveConfig = getEffectiveGPTConfig(voiceConfig, globalGptConfig, apiKey)
@@ -1038,7 +1049,29 @@ async function processQueue() {
     // Step 1: Sanitize input FIRST (strip HTML, code, user bracket tags)
     const globalSanitization = store.get('sanitization') || {}
     const effectiveSanitization = getEffectiveSanitization(voiceConfig, globalSanitization)
-    const { result: sanitizedText, sanitizationApplied } = sanitizeInput(item.text, effectiveSanitization)
+    const sanitizeResult = sanitizeInput(item.text, effectiveSanitization)
+    const { result: sanitizedText, sanitizationApplied } = sanitizeResult
+
+    // Check if spam was blocked
+    if (sanitizeResult.spamBlocked) {
+      console.log(`[2/6] BLOCKED BY SPAM FILTER`)
+      item.sanitizationApplied = sanitizationApplied
+      item.originalText = item.text
+      item.blockReason = 'Spam detected (repetitive content)'
+      item.status = 'blocked'
+      const refunded = sendRefundAction(item, `Content blocked: ${item.blockReason}`)
+      item.refunded = refunded
+      const historyEntry = createHistoryEntry(item, 'blocked', null, item.blockReason)
+      addToHistory(historyEntry)
+      const blockedIndex = ttsQueue.findIndex(i => i.id === item.id)
+      if (blockedIndex !== -1) {
+        ttsQueue.splice(blockedIndex, 1)
+      }
+      sendToRenderer('queue:update', getQueueState())
+      isProcessing = false
+      processQueue()
+      return
+    }
 
     console.log(`[2/6] AFTER SANITIZATION${sanitizationApplied.length > 0 ? ` (${sanitizationApplied.join(', ')})` : ' (no changes)'}:`)
     console.log(`      "${sanitizedText}"`)
@@ -1557,6 +1590,22 @@ ipcMain.handle('app:getVersion', () => {
   return app.getVersion()
 })
 
+ipcMain.handle('app:getChangelog', async () => {
+  const response = await fetch(
+    'https://api.github.com/repos/Flavionel/voice-forge/releases',
+    { headers: { 'Accept': 'application/vnd.github.v3+json' } }
+  )
+  if (!response.ok) throw new Error('Failed to fetch changelog')
+  const releases = await response.json()
+  return releases.map(r => ({
+    version: r.tag_name,
+    name: r.name,
+    body: r.body,
+    date: r.published_at,
+    url: r.html_url
+  }))
+})
+
 ipcMain.handle('shell:openExternal', (event, url) => {
   // Only allow http/https URLs for security
   if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
@@ -1679,7 +1728,20 @@ ipcMain.handle('textProcessing:test', (event, { text, voiceAlias }) => {
 
   // Step 1: Sanitize input (runs FIRST)
   const effectiveSanitization = getEffectiveSanitization(voiceConfig, globalSanitization)
-  const { result: sanitizedText, sanitizationApplied } = sanitizeInput(text, effectiveSanitization)
+  const sanitizeResult = sanitizeInput(text, effectiveSanitization)
+  const { result: sanitizedText, sanitizationApplied } = sanitizeResult
+
+  // If spam was blocked, return early
+  if (sanitizeResult.spamBlocked) {
+    return {
+      finalText: '',
+      sanitizedText: '',
+      sanitizationApplied,
+      appliedRules: [],
+      wasTruncated: false,
+      spamBlocked: true
+    }
+  }
 
   // Step 2: Apply replacements
   const { processedText, appliedRules } = processText(sanitizedText, voiceConfig, globalReplacements)

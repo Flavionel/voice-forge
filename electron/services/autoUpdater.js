@@ -36,12 +36,19 @@ export function initAutoUpdater(window) {
     autoUpdater.quitAndInstall(false, true)
   })
 
-  // Check for updates after a short delay (don't block startup)
+  // Check for updates after a short delay (let UI render first)
   setTimeout(() => {
     autoUpdater.checkForUpdates().catch((err) => {
       log.error('Update check failed:', err.message)
     })
-  }, 10000)
+  }, 3000)
+
+  // Re-check every 4 hours
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch((err) => {
+      log.error('Periodic update check failed:', err.message)
+    })
+  }, 4 * 60 * 60 * 1000)
 }
 
 function sendToRenderer(channel, data) {
