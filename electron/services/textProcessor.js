@@ -216,11 +216,11 @@ function collapseRepetition(text) {
     return `${preview}... a long number`
   })
 
-  // 2. Collapse repeated words (6+ consecutive repetitions)
+  // 2. Collapse repeated words (6+ repetitions, punctuation allowed between)
   //    "GO GO GO GO GO!" → allowed (5 or fewer)
-  //    "GO GO GO GO GO GO GO GO GO!" → collapsed
-  result = result.replace(/\b(\w+)(?:\s+\1){5,}\b/gi, (match, word) => {
-    const count = match.split(/\s+/).length
+  //    "GO GO GO! GO GO GO! GO GO GO!" → collapsed (9 total)
+  result = result.replace(/\b(\w+)(?:[\s!?,.:;]+\1){5,}\b/gi, (match, word) => {
+    const count = match.split(/[\s!?,.:;]+/).filter(Boolean).length
     if (count >= 10) return `${word}, a whole wall of them`
     if (count >= 7) return `${word}, so many of them`
     return `${word}, times ${count}`
