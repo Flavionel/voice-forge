@@ -212,6 +212,48 @@ function ensureLogDirectory() {
   }
 }
 
+function loadHistoryFromLogs() {
+  try {
+    const logDir = getLogDirectory()
+    if (!fs.existsSync(logDir)) return
+
+    const limit = store.get('historyInAppLimit') || 100
+
+    // Get all JSONL files sorted by date (newest first)
+    const files = fs.readdirSync(logDir)
+      .filter(f => f.startsWith('tts-history-') && f.endsWith('.jsonl'))
+      .sort((a, b) => b.localeCompare(a)) // Reverse chronological
+
+    let loaded = 0
+
+    for (const file of files) {
+      if (loaded >= limit) break
+
+      const filePath = path.join(logDir, file)
+      const content = fs.readFileSync(filePath, 'utf8')
+      const lines = content.trim().split('\n').filter(Boolean)
+
+      // Read lines in reverse order (newest entries last in file, we want newest first)
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if (loaded >= limit) break
+        try {
+          const entry = JSON.parse(lines[i])
+          ttsHistory.push(entry)
+          loaded++
+        } catch {
+          // Skip corrupted lines silently
+        }
+      }
+    }
+
+    if (loaded > 0) {
+      console.log(`[History] Loaded ${loaded} entries from log files`)
+    }
+  } catch (error) {
+    console.error('[History] Failed to load from logs:', error.message)
+  }
+}
+
 function addToHistory(entry) {
   // Add to in-memory history (for UI)
   const limit = store.get('historyInAppLimit') || 100
@@ -1511,6 +1553,10 @@ ipcMain.handle('history:openLogDirectory', () => {
   return true
 })
 
+ipcMain.handle('app:getVersion', () => {
+  return app.getVersion()
+})
+
 ipcMain.handle('shell:openExternal', (event, url) => {
   // Only allow http/https URLs for security
   if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
@@ -1692,6 +1738,7 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   createWindow()
+  loadHistoryFromLogs()
   if (store.get('minimizeToTray')) createTray()
   initAutoUpdater(mainWindow)
   startWebSocketServer()

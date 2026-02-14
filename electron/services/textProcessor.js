@@ -106,6 +106,142 @@ function stripZalgoText(text) {
 }
 
 /**
+ * Common emoji to spoken description map
+ * Covers the most frequently used emojis in Twitch/streaming context
+ */
+const EMOJI_MAP = {
+  // Faces - happy/positive
+  '😂': 'crying laughing', '🤣': 'rolling on the floor laughing', '😄': 'grinning',
+  '😁': 'beaming', '😆': 'laughing', '😊': 'smiling', '🙂': 'slightly smiling',
+  '😉': 'winky face', '😍': 'heart eyes', '🥰': 'smiling with hearts',
+  '😘': 'blowing a kiss', '😎': 'cool sunglasses', '🤩': 'star struck',
+  '🥳': 'party face', '😏': 'smirking',
+  // Faces - negative/other
+  '😢': 'crying', '😭': 'sobbing', '😱': 'screaming', '😡': 'angry face',
+  '🤬': 'swearing', '😤': 'huffing', '🙄': 'eye roll', '😑': 'expressionless',
+  '🤔': 'thinking', '🤯': 'mind blown', '😳': 'flushed', '😬': 'grimacing',
+  '🫠': 'melting face', '💀': 'skull', '☠️': 'skull and crossbones',
+  '🤡': 'clown', '👻': 'ghost', '😴': 'sleeping',
+  // Gestures
+  '👍': 'thumbs up', '👎': 'thumbs down', '👏': 'clapping', '🙏': 'praying hands',
+  '🤝': 'handshake', '✌️': 'peace sign', '🤙': 'call me hand',
+  '👋': 'waving', '🫡': 'salute', '🖕': 'middle finger',
+  // Hearts & symbols
+  '❤️': 'heart', '🧡': 'orange heart', '💛': 'yellow heart', '💚': 'green heart',
+  '💙': 'blue heart', '💜': 'purple heart', '🖤': 'black heart', '🤍': 'white heart',
+  '💔': 'broken heart', '💯': 'hundred', '✅': 'check mark', '❌': 'X mark',
+  '⭐': 'star', '🌟': 'glowing star', '✨': 'sparkles',
+  // Objects & misc
+  '🔥': 'fire', '💪': 'flexing', '🎉': 'party popper', '🎊': 'confetti',
+  '🏆': 'trophy', '🥇': 'gold medal', '🎮': 'game controller', '🎯': 'bullseye',
+  '💰': 'money bag', '💎': 'gem', '🚀': 'rocket', '💣': 'bomb',
+  '⚡': 'lightning', '🔔': 'bell', '🎵': 'music note', '🎶': 'music notes',
+  '👀': 'eyes', '👁️': 'eye', '🧠': 'brain', '💤': 'zzz',
+  // Animals
+  '🐐': 'goat', '🐍': 'snake', '🦊': 'fox', '🐸': 'frog',
+  '🐶': 'dog', '🐱': 'cat', '🦁': 'lion', '🐻': 'bear',
+  // Flags & misc symbols
+  '🏳️': 'white flag', '🚩': 'red flag', '💩': 'poop',
+  '🤖': 'robot', '👑': 'crown', '🧢': 'cap'
+}
+
+/**
+ * Replace emojis with fun spoken descriptions, then strip any remaining emojis
+ * Collapses repeated identical emojis into a single fun description
+ * @param {string} text - Input text
+ * @returns {string} - Text with emojis replaced by spoken descriptions
+ */
+function replaceEmojis(text) {
+  if (!text) return text
+
+  let result = text
+
+  // Phase 1: Collapse consecutive identical emojis into single descriptions
+  for (const [emoji, description] of Object.entries(EMOJI_MAP)) {
+    if (!result.includes(emoji)) continue
+
+    // Escape emoji for regex (handles variation selectors etc.)
+    const escaped = emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // Match 2+ consecutive of the same emoji (with optional spaces between)
+    const repeatedPattern = new RegExp(`(?:${escaped}\\s*){2,}`, 'gu')
+
+    result = result.replace(repeatedPattern, (match) => {
+      // Count how many times the emoji appears in the match
+      let count = 0
+      let idx = 0
+      while ((idx = match.indexOf(emoji, idx)) !== -1) {
+        count++
+        idx += emoji.length
+      }
+
+      if (count >= 7) return ` a whole wall of ${description} `
+      if (count >= 4) return ` so many ${description} `
+      if (count >= 3) return ` ${description} times ${count} `
+      return ` double ${description} `
+    })
+  }
+
+  // Phase 2: Replace remaining single emojis
+  for (const [emoji, description] of Object.entries(EMOJI_MAP)) {
+    result = result.split(emoji).join(` ${description} `)
+  }
+
+  // Phase 3: Strip any remaining unmapped emojis via Unicode emoji regex
+  result = result.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{20E3}]|[\u{E0020}-\u{E007F}]/gu, '')
+
+  // Normalize whitespace
+  result = result.replace(/\s+/g, ' ').trim()
+
+  return result
+}
+
+/**
+ * Collapse repetitive/spam content into concise summaries
+ * Prevents TTS from reading 50 identical characters or absurdly long numbers
+ * Designed to make spam attempts entertaining rather than disruptive
+ * @param {string} text - Input text
+ * @returns {string} - Text with spam collapsed
+ */
+function collapseRepetition(text) {
+  if (!text) return text
+
+  let result = text
+
+  // 1. Collapse repeated characters (5+ of the same char)
+  //    "aaaaaaaaaa" → "10 a's", "HAHAHAHAHAHA" → handled by word repeat below
+  result = result.replace(/(.)\1{4,}/g, (match, char) => {
+    const count = match.length
+    if (count >= 20) return `a massive wall of ${char}'s`
+    if (count >= 10) return `${count} ${char}'s`
+    return `${count} ${char}'s`
+  })
+
+  // 2. Collapse long number strings (10+ digits)
+  //    "12323423424234634634634060980394860394860348603968" → "123... a ridiculously long number"
+  result = result.replace(/\d{10,}/g, (match) => {
+    const preview = match.substring(0, 3)
+    if (match.length >= 30) return `${preview}... an absurdly long number`
+    if (match.length >= 15) return `${preview}... a very long number`
+    return `${preview}... a long number`
+  })
+
+  // 3. Collapse repeated words/phrases (3+ consecutive repetitions)
+  //    "lol lol lol lol lol" → "lol, a LOT of them"
+  //    "spam spam spam" → "spam, times 3"
+  result = result.replace(/\b(\w+)(?:\s+\1){2,}\b/gi, (match, word) => {
+    const count = match.split(/\s+/).length
+    if (count >= 7) return `${word}, a whole wall of them`
+    if (count >= 4) return `${word}, so many of them`
+    return `${word}, times ${count}`
+  })
+
+  // Normalize whitespace
+  result = result.replace(/\s+/g, ' ').trim()
+
+  return result
+}
+
+/**
  * Sanitize input text by removing HTML, code, and optionally user bracket tags
  * @param {string} text - Input text
  * @param {Object} config - Sanitization config { stripHtmlTags, stripCodeBlocks, stripUserBracketTags }
@@ -143,6 +279,24 @@ function sanitizeInput(text, config) {
     result = stripZalgoText(result)
     if (before !== result) {
       sanitizationApplied.push('zalgo')
+    }
+  }
+
+  // Replace emojis with spoken descriptions
+  if (config?.replaceEmojis !== false) {
+    const before = result
+    result = replaceEmojis(result)
+    if (before !== result) {
+      sanitizationApplied.push('emojis')
+    }
+  }
+
+  // Collapse repetitive/spam content (always on — nobody wants TTS reading 50 a's)
+  {
+    const before = result
+    result = collapseRepetition(result)
+    if (before !== result) {
+      sanitizationApplied.push('spam')
     }
   }
 
@@ -207,6 +361,7 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
     stripHtmlTags: true,
     stripCodeBlocks: true,
     stripZalgoText: true,
+    replaceEmojis: true,
     stripUserBracketTags: true
   }
 
@@ -216,6 +371,7 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
       stripHtmlTags: false,
       stripCodeBlocks: false,
       stripZalgoText: false,
+      replaceEmojis: false,
       stripUserBracketTags: false
     }
   }
@@ -225,6 +381,7 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
     stripHtmlTags: globalConfig?.stripHtmlTags ?? defaults.stripHtmlTags,
     stripCodeBlocks: globalConfig?.stripCodeBlocks ?? defaults.stripCodeBlocks,
     stripZalgoText: globalConfig?.stripZalgoText ?? defaults.stripZalgoText,
+    replaceEmojis: globalConfig?.replaceEmojis ?? defaults.replaceEmojis,
     stripUserBracketTags: globalConfig?.stripUserBracketTags ?? defaults.stripUserBracketTags
   }
 
@@ -234,6 +391,9 @@ function getEffectiveSanitization(voiceConfig, globalConfig) {
   }
   if (voiceConfig?.allowZalgoText) {
     config.stripZalgoText = false
+  }
+  if (voiceConfig?.allowEmojis) {
+    config.replaceEmojis = false
   }
 
   return config

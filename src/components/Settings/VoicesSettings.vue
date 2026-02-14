@@ -140,7 +140,7 @@
                     @update:model-value="toggleIgnoreSanitization(voice, $event)"
                   />
                   <div class="text-caption text-grey-6 q-ml-xl">
-                    Skip HTML stripping, code block removal, Zalgo stripping, and bracket tag cleaning.
+                    Skip HTML stripping, code block removal, Zalgo stripping, emoji replacement, and bracket tag cleaning.
                   </div>
 
                   <div v-if="!voice.ignoreSanitization" class="q-mt-sm">
@@ -152,6 +152,16 @@
                     />
                     <div class="text-caption text-grey-6 q-ml-xl">
                       Don't strip Unicode combining marks for this voice.
+                    </div>
+
+                    <q-toggle
+                      :model-value="voice.allowEmojis || false"
+                      label="Allow Emojis (skip replacement)"
+                      color="cyan"
+                      @update:model-value="toggleAllowEmojis(voice, $event)"
+                    />
+                    <div class="text-caption text-grey-6 q-ml-xl">
+                      Don't replace emojis with text descriptions for this voice.
                     </div>
                   </div>
                 </div>
@@ -1038,7 +1048,7 @@ const isStyleSupported = computed(() => {
 // ============ BADGE HELPERS ============
 
 function hasAnyTextOverride(voice) {
-  return voice.ignoreSanitization || voice.allowZalgoText ||
+  return voice.ignoreSanitization || voice.allowZalgoText || voice.allowEmojis ||
          voice.ignoreGlobalReplacements ||
          voice.replacements?.length > 0 || voice.ignoreMaxMessageLength ||
          voice.maxMessageLengthOverride
@@ -1358,6 +1368,10 @@ function toggleIgnoreSanitization(voice, value) {
 
 function toggleAllowZalgoText(voice, value) {
   updateVoice(voice, { allowZalgoText: value })
+}
+
+function toggleAllowEmojis(voice, value) {
+  updateVoice(voice, { allowEmojis: value })
 }
 
 function toggleIgnoreGlobal(voice, value) {

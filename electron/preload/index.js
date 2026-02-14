@@ -47,6 +47,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   browseLogDirectory: () => ipcRenderer.invoke('history:browseLogDirectory'),
   openLogDirectory: () => ipcRenderer.invoke('history:openLogDirectory'),
 
+  // App info
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+
   // Shell
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
 

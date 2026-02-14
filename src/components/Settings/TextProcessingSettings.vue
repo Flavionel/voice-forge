@@ -50,6 +50,17 @@
           </div>
 
           <q-toggle
+            :model-value="sanitization.replaceEmojis"
+            label="Replace emojis with text"
+            @update:model-value="val => updateSanitization('replaceEmojis', val)"
+          />
+          <div class="text-caption text-grey-6 q-ml-xl q-mb-md">
+            Converts emojis to fun spoken descriptions (e.g., 😂 → "crying laughing").
+            Prevents TTS issues with unsupported characters.
+            <strong>Individual voices can override this.</strong>
+          </div>
+
+          <q-toggle
             :model-value="sanitization.stripUserBracketTags"
             label="Strip user bracket tags"
             @update:model-value="val => updateSanitization('stripUserBracketTags', val)"
@@ -385,6 +396,7 @@ const sanitization = computed(() => {
     stripHtmlTags: s.stripHtmlTags ?? true,
     stripCodeBlocks: s.stripCodeBlocks ?? true,
     stripZalgoText: s.stripZalgoText ?? true,
+    replaceEmojis: s.replaceEmojis ?? true,
     stripUserBracketTags: s.stripUserBracketTags ?? true
   }
 })
