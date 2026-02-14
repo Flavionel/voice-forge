@@ -207,16 +207,7 @@ function collapseRepetition(text) {
 
   let result = text
 
-  // 1. Collapse repeated characters (5+ of the same char)
-  //    "aaaaaaaaaa" → "10 a's", "HAHAHAHAHAHA" → handled by word repeat below
-  result = result.replace(/(.)\1{4,}/g, (match, char) => {
-    const count = match.length
-    if (count >= 20) return `a massive wall of ${char}'s`
-    if (count >= 10) return `${count} ${char}'s`
-    return `${count} ${char}'s`
-  })
-
-  // 2. Collapse long number strings (10+ digits)
+  // 1. Collapse long number strings (10+ digits)
   //    "12323423424234634634634060980394860394860348603968" → "123... a ridiculously long number"
   result = result.replace(/\d{10,}/g, (match) => {
     const preview = match.substring(0, 3)
@@ -225,13 +216,13 @@ function collapseRepetition(text) {
     return `${preview}... a long number`
   })
 
-  // 3. Collapse repeated words/phrases (3+ consecutive repetitions)
-  //    "lol lol lol lol lol" → "lol, a LOT of them"
-  //    "spam spam spam" → "spam, times 3"
-  result = result.replace(/\b(\w+)(?:\s+\1){2,}\b/gi, (match, word) => {
+  // 2. Collapse repeated words (6+ consecutive repetitions)
+  //    "GO GO GO GO GO!" → allowed (5 or fewer)
+  //    "GO GO GO GO GO GO GO GO GO!" → collapsed
+  result = result.replace(/\b(\w+)(?:\s+\1){5,}\b/gi, (match, word) => {
     const count = match.split(/\s+/).length
-    if (count >= 7) return `${word}, a whole wall of them`
-    if (count >= 4) return `${word}, so many of them`
+    if (count >= 10) return `${word}, a whole wall of them`
+    if (count >= 7) return `${word}, so many of them`
     return `${word}, times ${count}`
   })
 

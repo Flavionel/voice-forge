@@ -1,6 +1,6 @@
 {
   "name": "voice-forge",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Advanced TTS app for streaming with ElevenLabs integration",
   "main": "./out/main/index.js",
   "author": "Flavionel",
