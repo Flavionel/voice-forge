@@ -17,7 +17,7 @@ I made it because the existing TTS options just... weren’t cutting it. ElevenL
 
 VoiceForge fixes that with a clever twist: it uses ChatGPT as your personal Voice Director. For every message, it reads the text, figures out the vibe, and automatically adds the perfect V3 tags for emotion, pacing, and tone. The result? Your TTS stops sounding like a robot and starts feeling like a real character reacting to chat.
 
-And since GPT is already looking at every message, we put it to double duty with smart AI content moderation — quietly catching anything inappropriate, sneaky evasions, or off-limits topics before they ever hit your speakers.
+And since GPT is already looking at every message, I put it to double duty with smart AI content moderation — quietly catching anything inappropriate, sneaky evasions, or off-limits topics before they ever hit your speakers.
 
 ## Features
 
@@ -42,7 +42,7 @@ And since GPT is already looking at every message, we put it to double duty with
 
 ### Download
 
-Download the latest installer from the [Releases](../../releases) page.
+Download the latest installer and .sb files from the [Releases](../../releases) page.
 
 ### Build from Source
 
